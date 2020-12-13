@@ -39,25 +39,27 @@ func insertSelfAfter(oldNodeAddr string) {
 	updateRouting(nextNode.Address, RoutingInfo{Prev: node.Address})
 	node.PrevAddress = prevNode.Address
 	node.NextAddress = nextNode.Address
+	log.Println("Node info: ", node)
 }
 
 func setRoutes() {
 	http.HandleFunc("/", homePageHandler)
 	http.HandleFunc("/stats", statsHandler)
 	http.HandleFunc("/node", getNodeInfoHandler)
+	http.HandleFunc("/data", dataDisplayHandler)
 	http.HandleFunc("/update-routing", updateRoutingHandler)
+	http.HandleFunc("/server-data", directDataLevelCommunicationHandler)
 }
 
 func initNode() {
-	const BasePort uint = 8000
-	CompleteBaseAddress := fmt.Sprintf(":%d", BasePort)
 	if util.CheckPortOpen(BasePort) {
 		log.Printf("Starting first node at port %d", BasePort)
-		node.ID = util.Hash(CompleteBaseAddress, K)
-		node.Address = CompleteBaseAddress
-		node.NextAddress = CompleteBaseAddress
-		node.PrevAddress = CompleteBaseAddress
-		err := http.ListenAndServe(CompleteBaseAddress, nil)
+		node.ID = util.Hash(CompleteBaseAddress(), K)
+		node.Address = CompleteBaseAddress()
+		node.NextAddress = CompleteBaseAddress()
+		node.PrevAddress = CompleteBaseAddress()
+		log.Println("Base node info: ",node)
+		err := http.ListenAndServe(CompleteBaseAddress(), nil)
 		if err != nil {
 			log.Fatal("Could not start root node")
 		}
@@ -72,7 +74,7 @@ func initNode() {
 		completeAddress := fmt.Sprintf(":%d", availablePort)
 		node.ID = util.Hash(completeAddress, K)
 		node.Address = completeAddress
-		rootNode, _ := addrToNode(CompleteBaseAddress)
+		rootNode, _ := addrToNode(CompleteBaseAddress())
 		nodeToInsertAfter := findNode(rootNode, completeAddress)
 		insertSelfAfter(nodeToInsertAfter.Address)
 		err := http.ListenAndServe(completeAddress, nil)

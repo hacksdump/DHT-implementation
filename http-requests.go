@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -36,4 +38,37 @@ func updateRouting(addr string, routingInfo RoutingInfo) (Node, error){
 	return node, nil
 
 	return Node{}, err
+}
+
+func readDataFromSpecificNode(node Node, key string) (KeyValuePair, error) {
+	url := fmt.Sprintf("http://%s/server-data", node.Address)
+	jsonData, _ := json.Marshal(KeyValuePair{key, ""})
+	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return KeyValuePair{}, errors.New(resp.Status)
+	}
+	var keyValuePair KeyValuePair
+	json.NewDecoder(resp.Body).Decode(&keyValuePair)
+	return keyValuePair, nil
+}
+
+func writeDataToSpecificNode(node Node, keyValuePair KeyValuePair) (ResponseMessage, error) {
+	url := fmt.Sprintf("http://%s/server-data", node.Address)
+	jsonData, _ := json.Marshal(keyValuePair)
+	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	json.NewDecoder(resp.Body).Decode(&keyValuePair)
+	return ResponseMessage{true, "Written"}, nil
 }

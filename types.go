@@ -5,15 +5,13 @@ type KeyValuePair struct {
 	Value string `json:"value"`
 }
 
-type Key struct {
-	Key string `json:"key"`
-}
-
-type Value struct {
-	Value string `json:"value"`
-}
+//type ServerKeyValue struct {
+//	ServerAddress string `json:"serverAddress"`
+//	Data KeyValuePair `json:"data"`
+//}
 
 type ResponseMessage struct {
+	Success bool `json:"success"`
 	Message string `json:"message"`
 }
 
