@@ -14,7 +14,7 @@ func (node Node) Next() Node {
 	if err == nil {
 		return nextNode
 	}
-	log.Fatal("Couldn't find prev node")
+	log.Fatal("Couldn't find next node")
 	return Node{}
 }
 
@@ -23,6 +23,6 @@ func (node Node) Prev() Node {
 	if err == nil {
 		return prevNode
 	}
-	log.Fatal("Couldn't find next node")
+	log.Fatal("Couldn't find prev node")
 	return Node{}
 }
