@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"math"
 	"net/http"
 )
 
@@ -23,6 +25,18 @@ type Value struct {
 
 type ResponseMessage struct {
 	Message string `json:"message"`
+}
+
+const K = 3
+
+func ringDistance(a int, b int) uint {
+	if a == b {
+		return 0
+	}
+	if a < b {
+		return uint(b - a)
+	}
+	return uint(int(math.Pow(2, K)) + b - a)
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +91,18 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 
 func handleRequests() {
 	http.HandleFunc("/", homePage)
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	const BasePort = 8000
+	completeAddress := fmt.Sprintf(":%d", BasePort)
+	log.Printf("Trying to start as first node at port %d", BasePort)
+	err := http.ListenAndServe(completeAddress, nil)
+	currentPort := BasePort + 1
+	completeAddress = fmt.Sprintf(":%d", currentPort)
+	for err != nil {
+		log.Printf("Trying to start as subsequent node at port %d", currentPort)
+		err = http.ListenAndServe(completeAddress, nil)
+		currentPort += 1
+		completeAddress = fmt.Sprintf(":%d", currentPort)
+	}
 }
 
 func main() {
