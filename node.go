@@ -1,5 +1,7 @@
 package main
 
+import "log"
+
 type Node struct {
 	ID          uint
 	Address     string
@@ -7,18 +9,20 @@ type Node struct {
 	PrevAddress string
 }
 
-func (node Node) Next() (Node, error) {
+func (node Node) Next() Node {
 	nextNode, err := addrToNode(node.NextAddress)
 	if err == nil {
-		return nextNode, nil
+		return nextNode
 	}
-	return Node{}, err
+	log.Fatal("Couldn't find prev node")
+	return Node{}
 }
 
-func (node Node) Prev() (Node, error) {
+func (node Node) Prev() Node {
 	prevNode, err := addrToNode(node.PrevAddress)
 	if err == nil {
-		return prevNode, nil
+		return prevNode
 	}
-	return Node{}, err
+	log.Fatal("Couldn't find next node")
+	return Node{}
 }

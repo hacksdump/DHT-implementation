@@ -22,7 +22,11 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		requestKey := requestBody.Key
 		log.Println("Received request to find key", requestKey)
-		readFromNode := findNode(node, requestKey)
+		baseNode, err := addrToNode(CompleteBaseAddress())
+		if err != nil {
+			log.Fatal("Base node not found while searching for a key")
+		}
+		readFromNode := findNode(baseNode, requestKey)
 		log.Printf("Trying to find the key %s in node %+v", requestKey, readFromNode)
 		keyValuePair, err := readDataFromSpecificNode(readFromNode, requestKey)
 
@@ -53,9 +57,16 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		writeToNode := findNode(node, body.Key)
+		log.Printf("Received request to save data %+v", body)
+
+		baseNode, err := addrToNode(CompleteBaseAddress())
+		if err != nil {
+			log.Fatal("Base node not found while searching for a key")
+		}
+		writeToNode := findNode(baseNode, body.Key)
 		_, err = writeDataToSpecificNode(writeToNode, body)
 		if err == nil {
+			log.Printf("Writing to node %+v", writeToNode)
 			responseMessage := ResponseMessage{true,
 				fmt.Sprintf("Successfully Written to node with ID: %d and address: %s",
 					writeToNode.ID,
@@ -86,7 +97,7 @@ func directDataLevelCommunicationHandler(w http.ResponseWriter, r *http.Request)
 			keyValuePair := KeyValuePair{requestKey, val}
 			log.Println("Found", keyValuePair)
 			w.WriteHeader(http.StatusOK)
-			err = json.NewEncoder(w).Encode(KeyValuePair{})
+			err = json.NewEncoder(w).Encode(keyValuePair)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -111,6 +122,7 @@ func directDataLevelCommunicationHandler(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		keyValueStore[body.Key] = body.Value
+		log.Printf("Written the data %+v", KeyValuePair{body.Key, body.Value})
 		responseMessage := ResponseMessage{true,"Successfully Written"}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
@@ -159,7 +171,7 @@ func updateRoutingHandler(w http.ResponseWriter, r *http.Request) {
 		if len(newRoutingInfo.Next) > 0 {
 			node.NextAddress = newRoutingInfo.Next
 		}
-		log.Println("Updated node info: ", node)
+		log.Printf("Updated node info: %+v", node)
 	} else {
 		http.Error(w, "Only use GET or PUT", http.StatusMethodNotAllowed)
 	}

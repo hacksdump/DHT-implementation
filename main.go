@@ -21,9 +21,9 @@ func getNextNode(node Node) Node {
 
 func findNode(start Node, key string) Node {
 	current := start
-	nextNode := getNextNode(current)
-	for util.RingDistance(util.Hash(current.Address, K), util.Hash(key, K), K) >
-		util.RingDistance(util.Hash(nextNode.Address, K), util.Hash(key, K), K) {
+	keyHash := util.Hash(key, K)
+	for util.RingDistance(util.Hash(current.Address, K), keyHash, K) >
+		util.RingDistance(util.Hash(current.Next().Address, K), keyHash, K) {
 		current = getNextNode(current)
 	}
 	return current
@@ -34,12 +34,12 @@ func insertSelfAfter(oldNodeAddr string) {
 	if err != nil {
 		log.Fatal("Insert self in network failed")
 	}
-	nextNode, err := prevNode.Next()
+	nextNode := prevNode.Next()
 	updateRouting(prevNode.Address, RoutingInfo{Next: node.Address})
 	updateRouting(nextNode.Address, RoutingInfo{Prev: node.Address})
 	node.PrevAddress = prevNode.Address
 	node.NextAddress = nextNode.Address
-	log.Println("Node info: ", node)
+	log.Printf("Node info: %+v", node)
 }
 
 func setRoutes() {
@@ -58,7 +58,7 @@ func initNode() {
 		node.Address = CompleteBaseAddress()
 		node.NextAddress = CompleteBaseAddress()
 		node.PrevAddress = CompleteBaseAddress()
-		log.Println("Base node info: ",node)
+		log.Printf("Base node info: %+v", node)
 		err := http.ListenAndServe(CompleteBaseAddress(), nil)
 		if err != nil {
 			log.Fatal("Could not start root node")
