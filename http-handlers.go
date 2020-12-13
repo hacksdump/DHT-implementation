@@ -141,11 +141,7 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 
 func dataDisplayHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	allValues := make([]KeyValuePair, 0, len(keyValueStore))
-	for k := range keyValueStore {
-		allValues = append(allValues, KeyValuePair{k, keyValueStore[k]})
-	}
-	json.NewEncoder(w).Encode(allValues)
+	json.NewEncoder(w).Encode(getAllData())
 }
 
 func getNodeInfoHandler(w http.ResponseWriter, r *http.Request) {

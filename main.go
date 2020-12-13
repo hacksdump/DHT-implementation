@@ -7,8 +7,6 @@ import (
 	"net/http"
 )
 
-var keyValueStore = make(map[string]string)
-
 var node Node
 
 func getNextNode(node Node) Node {
