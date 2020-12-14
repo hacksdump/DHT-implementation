@@ -36,6 +36,17 @@ func insertSelfAfter(oldNodeAddr string) {
 		log.Fatal("Insert self in network failed")
 	}
 	nextNode := prevNode.Next()
+
+	// Copy required data from prev node
+	allDataFromPrevNode := getAllDataFromNode(prevNode)
+	for _, item := range allDataFromPrevNode {
+		itemKeyHash := util.Hash(item.Key, K)
+		if util.RingDistance(node.ID, itemKeyHash, K) <
+			util.RingDistance(prevNode.ID, itemKeyHash, K) {
+			log.Printf("Copying %+v with hash %d from predecessor %d to self", item, itemKeyHash, prevNode.ID)
+			keyValueStore[item.Key] = item.Value
+		}
+	}
 	updateRouting(prevNode.Address, RoutingInfo{Next: node.Address})
 	updateRouting(nextNode.Address, RoutingInfo{Prev: node.Address})
 	node.PrevAddress = prevNode.Address
@@ -95,6 +106,10 @@ func closeGracefully() {
 	next := node.Next()
 	updateRouting(prev.Address, RoutingInfo{Next: next.Address})
 	updateRouting(next.Address, RoutingInfo{Prev: prev.Address})
+	log.Println("Exiting... Transferring all data to predecessor")
+	for _, item := range getAllData() {
+		writeDataToSpecificNode(prev, item)
+	}
 }
 
 func setupCloseHandler() {

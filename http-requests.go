@@ -72,3 +72,13 @@ func writeDataToSpecificNode(node Node, keyValuePair KeyValuePair) (ResponseMess
 	json.NewDecoder(resp.Body).Decode(&keyValuePair)
 	return ResponseMessage{true, "Written"}, nil
 }
+
+func getAllDataFromNode(node Node) []KeyValuePair {
+	resp, err := http.Get(fmt.Sprintf("http://%s/data", node.Address))
+	if err == nil {
+		var allData []KeyValuePair
+		json.NewDecoder(resp.Body).Decode(&allData)
+		return allData
+	}
+	return []KeyValuePair{}
+}
