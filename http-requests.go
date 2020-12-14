@@ -73,6 +73,22 @@ func writeDataToSpecificNode(node Node, keyValuePair KeyValuePair) (ResponseMess
 	return ResponseMessage{true, "Written"}, nil
 }
 
+func deleteDataFromSpecificNode(node Node, key string) (ResponseMessage, error) {
+	url := fmt.Sprintf("http://%s/server-data", node.Address)
+	jsonData, _ := json.Marshal(KeyValuePair{key, ""})
+	req, err := http.NewRequest(http.MethodDelete, url, bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if resp.StatusCode == http.StatusOK {
+		return ResponseMessage{true, "Successfully deleted"}, nil
+	}
+	return ResponseMessage{false, "Delete failure"}, errors.New("delete failure")
+}
+
 func getAllDataFromNode(node Node) []KeyValuePair {
 	resp, err := http.Get(fmt.Sprintf("http://%s/data", node.Address))
 	if err == nil {

@@ -44,6 +44,7 @@ func insertSelfAfter(oldNodeAddr string) {
 		if util.RingDistance(node.ID, itemKeyHash, K) <
 			util.RingDistance(prevNode.ID, itemKeyHash, K) {
 			log.Printf("Copying %+v with hash %d from predecessor %d to self", item, itemKeyHash, prevNode.ID)
+			deleteDataFromSpecificNode(prevNode, item.Key)
 			keyValueStore[item.Key] = item.Value
 		}
 	}

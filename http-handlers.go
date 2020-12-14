@@ -12,6 +12,7 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == http.MethodGet {
 		var requestBody KeyValuePair
@@ -30,7 +31,6 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Trying to find the key %s in node %+v", requestKey, readFromNode)
 		keyValuePair, err := readDataFromSpecificNode(readFromNode, requestKey)
 
-		w.Header().Set("Content-Type", "application/json")
 		if err == nil {
 			w.WriteHeader(http.StatusOK)
 			err = json.NewEncoder(w).Encode(keyValuePair)
@@ -51,7 +51,6 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 
 		if body.Key == "" || body.Value == "" {
 			responseMessage := ResponseMessage{false,"Key or value missing. No write or update performed"}
-			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			err = json.NewEncoder(w).Encode(responseMessage)
 			return
@@ -77,12 +76,39 @@ func homePageHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Fatal(err)
 		}
+	} else if r.Method == http.MethodDelete {
+		var requestBody KeyValuePair
+		err := json.NewDecoder(r.Body).Decode(&requestBody)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		requestKey := requestBody.Key
+		log.Println("Received request to delete key", requestKey)
+		baseNode, err := addrToNode(CompleteBaseAddress())
+		if err != nil {
+			log.Fatal("Base node not found while searching for a key")
+		}
+		deleteFromNode := findNode(baseNode, requestKey)
+		log.Printf("Trying to delete the key %s from node %+v", requestKey, deleteFromNode)
+		respMessage, err := deleteDataFromSpecificNode(deleteFromNode, requestKey)
+
+		if err == nil {
+			w.WriteHeader(http.StatusOK)
+			err = json.NewEncoder(w).Encode(respMessage)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			log.Fatal(err)
+		}
 	} else {
 		http.Error(w, "Only use GET or PUT", http.StatusMethodNotAllowed)
 	}
 }
 
 func directDataLevelCommunicationHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	if r.Method == http.MethodGet {
 		var requestBody KeyValuePair
 		err := json.NewDecoder(r.Body).Decode(&requestBody)
@@ -90,7 +116,6 @@ func directDataLevelCommunicationHandler(w http.ResponseWriter, r *http.Request)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
 		requestKey := requestBody.Key
 		log.Printf("Checking if key %s is present in local store", requestKey)
 		if val, ok := keyValueStore[requestKey]; ok {
@@ -116,7 +141,6 @@ func directDataLevelCommunicationHandler(w http.ResponseWriter, r *http.Request)
 
 		if body.Key == "" || body.Value == "" {
 			responseMessage := ResponseMessage{false,"Key or value missing. No write or update performed"}
-			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			err = json.NewEncoder(w).Encode(responseMessage)
 			return
@@ -127,6 +151,21 @@ func directDataLevelCommunicationHandler(w http.ResponseWriter, r *http.Request)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		err = json.NewEncoder(w).Encode(responseMessage)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if r.Method == http.MethodDelete {
+		var requestBody KeyValuePair
+		err := json.NewDecoder(r.Body).Decode(&requestBody)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		requestKey := requestBody.Key
+		log.Printf("Attempting to delete key %s if present", requestKey)
+		delete(keyValueStore, requestKey)
+		w.WriteHeader(http.StatusOK)
+		err = json.NewEncoder(w).Encode(ResponseMessage{true, fmt.Sprintf("Key %s deleted", requestKey)})
 		if err != nil {
 			log.Fatal(err)
 		}
