@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 var node Node
@@ -87,6 +90,24 @@ func handleRequests() {
 	initNode()
 }
 
+func closeGracefully() {
+	prev := node.Prev()
+	next := node.Next()
+	updateRouting(prev.Address, RoutingInfo{Next: next.Address})
+	updateRouting(next.Address, RoutingInfo{Prev: prev.Address})
+}
+
+func setupCloseHandler() {
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGINT)
+	go func() {
+		<-c
+		closeGracefully()
+		os.Exit(0)
+	}()
+}
+
 func main() {
+	setupCloseHandler()
 	handleRequests()
 }
