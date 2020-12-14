@@ -20,11 +20,17 @@ Run as many nodes as you want. The port number will be self-assigned. Just keep 
        "key": "someQueryKey"
    }
    ```
-   a. Use `PUT` method to retrieve values. Pass this as JSON body.
+   b. Use `PUT` method to retrieve values. Pass this as JSON body.
    ```json
    {
        "key":   "someKey",
        "value": "someValue"
+   }
+   ```
+   c. Use `DELETE` method to delete data. Pass this as JSON body.   
+   ```json
+   {
+       "key": "someKeyToDelete"
    }
    ```
 
